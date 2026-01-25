@@ -54,7 +54,13 @@ tasks.register('runJar') {
         def processBuilder = new ProcessBuilder(
             'javaw', '-jar', jarFile.absolutePath
         )
-        processBuilder.start()
-        println "Application launched!"
+        processBuilder.directory(project.projectDir)
+
+        try {
+            processBuilder.start()
+            println "Application launched!"
+        } catch (IOException e) {
+            throw new GradleException("Failed to start application: ${e.message}", e)
+        }
     }
 }
