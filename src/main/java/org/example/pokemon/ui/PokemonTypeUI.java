@@ -6,6 +6,7 @@ import org.example.pokemon.service.TypeEffectivenessCalculator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.List;
@@ -38,6 +39,10 @@ public class PokemonTypeUI extends JFrame {
     private final TypeSelectorPanel type1Selector;
     private final TypeSelectorPanel type2Selector;
     private final JPanel resultsPanel;
+    
+    // Display panels for currently selected types
+    private final JPanel type1Display;
+    private final JPanel type2Display;
 
     /**
      * Constructor with dependency injection.
@@ -53,25 +58,45 @@ public class PokemonTypeUI extends JFrame {
 
         // Create UI components
         JPanel mainPanel = createMainPanel();
-        JPanel selectorsPanel = createSelectorsPanel();
         this.resultsPanel = createResultsPanel();
         
         // Create type selectors
         this.type1Selector = new TypeSelectorPanel("Defending Type 1 (Required)", false);
         this.type2Selector = new TypeSelectorPanel("Defending Type 2 (Optional)", true);
         
+        // Create selected type display panels
+        this.type1Display = createSelectedTypeDisplay();
+        this.type2Display = createSelectedTypeDisplay();
+        
         // Set default selection for type 1
         type1Selector.setSelectedType(PokemonType.NORMAL);
         
-        // Add to selectors panel
-        selectorsPanel.add(type1Selector);
+        // Create selector panels with displays
+        JPanel type1Container = createSelectorContainer(type1Display, type1Selector);
+        JPanel type2Container = createSelectorContainer(type2Display, type2Selector);
+        
+        // Create main selectors panel
+        JPanel selectorsPanel = createSelectorsPanel();
+        selectorsPanel.add(type1Container);
         selectorsPanel.add(Box.createHorizontalStrut(SELECTOR_SPACING));
-        selectorsPanel.add(type2Selector);
+        selectorsPanel.add(type2Container);
+        
+        // Create separator between selectors and results
+        JSeparator separator = new JSeparator(JSeparator.HORIZONTAL);
+        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
         
         JScrollPane scrollPane = createScrollPane();
 
-        // Assemble layout
-        mainPanel.add(selectorsPanel, BorderLayout.NORTH);
+        // Assemble layout with separator
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.setBackground(Color.WHITE);
+        topPanel.add(selectorsPanel);
+        topPanel.add(Box.createVerticalStrut(10));
+        topPanel.add(separator);
+        topPanel.add(Box.createVerticalStrut(10));
+        
+        mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
 
@@ -113,6 +138,28 @@ public class PokemonTypeUI extends JFrame {
         panel.setBackground(Color.WHITE);
         return panel;
     }
+    
+    /**
+     * Creates a panel to display the currently selected type.
+     */
+    private JPanel createSelectedTypeDisplay() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 5));
+        panel.setBackground(Color.WHITE);
+        return panel;
+    }
+    
+    /**
+     * Creates a container that combines the selected type display and selector panel.
+     */
+    private JPanel createSelectorContainer(JPanel displayPanel, TypeSelectorPanel selectorPanel) {
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBackground(Color.WHITE);
+        container.add(displayPanel);
+        container.add(selectorPanel);
+        return container;
+    }
 
     /**
      * Creates the results panel.
@@ -148,6 +195,10 @@ public class PokemonTypeUI extends JFrame {
         if (type2 == null) {
             type2 = PokemonType.NONE;
         }
+        
+        // Update the selected type displays
+        updateSelectedTypeDisplay(type1Display, type1);
+        updateSelectedTypeDisplay(type2Display, type2);
 
         Map<Double, List<PokemonType>> grouped = calculator.groupTypesByEffectiveness(type1, type2);
         displayGroupedResults(grouped);
@@ -157,6 +208,75 @@ public class PokemonTypeUI extends JFrame {
         
         // Adjust window height to fit content
         adjustWindowHeight();
+    }
+    
+    /**
+     * Updates a selected type display panel with the current type button.
+     */
+    private void updateSelectedTypeDisplay(JPanel displayPanel, PokemonType type) {
+        displayPanel.removeAll();
+        
+        if (type != null && type != PokemonType.NONE) {
+            // Create a label that looks like the selected button
+            JLabel displayLabel = createSelectedTypeLabel(type);
+            displayPanel.add(displayLabel);
+        } else {
+            // Create an empty placeholder button for "none selected"
+            JLabel emptyLabel = createEmptyTypeLabel();
+            displayPanel.add(emptyLabel);
+        }
+        
+        displayPanel.revalidate();
+        displayPanel.repaint();
+    }
+    
+    /**
+     * Creates a label that looks like a selected type button.
+     */
+    private JLabel createSelectedTypeLabel(PokemonType type) {
+        JLabel label = new JLabel(type.getDisplayName());
+        label.setOpaque(true);
+        label.setBackground(type.getColor());
+        
+        // Calculate text color based on background brightness
+        int brightness = (type.getColor().getRed() 
+                        + type.getColor().getGreen() 
+                        + type.getColor().getBlue()) / 3;
+        label.setForeground(brightness < 160 ? Color.WHITE : Color.BLACK);
+        
+        label.setFont(new Font("Arial", Font.BOLD, 10));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setPreferredSize(new Dimension(70, 28));
+        label.setMinimumSize(new Dimension(70, 28));
+        
+        // Bold border to show it's selected
+        label.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(50, 50, 50), 3),
+                new EmptyBorder(4, 8, 4, 8)
+        ));
+        
+        return label;
+    }
+    
+    /**
+     * Creates an empty label to show no type is selected.
+     */
+    private JLabel createEmptyTypeLabel() {
+        JLabel label = new JLabel("None");
+        label.setOpaque(false);
+        label.setForeground(Color.GRAY);
+        label.setFont(new Font("Arial", Font.PLAIN, 10));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setPreferredSize(new Dimension(70, 28));
+        label.setMinimumSize(new Dimension(70, 28));
+        
+        // Just a border to show the empty state
+        label.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Color.LIGHT_GRAY, 2),
+                new EmptyBorder(4, 8, 4, 8)
+        ));
+        
+        return label;
     }
     
     /**
