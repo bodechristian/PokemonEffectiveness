@@ -1,9 +1,23 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'org.example'
 version = '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'org.example.Main'
+}
+
+// Ensure the JAR has a manifest with Main-Class attribute
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'org.example.Main'
+        )
+    }
+}
 
 repositories {
     mavenCentral()
@@ -17,4 +31,30 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+/**
+ * Custom task to run the JAR file in a non-blocking way.
+ * This builds the JAR and launches it as a separate process.
+ * Unlike 'run', this doesn't block Gradle.
+ */
+tasks.register('runJar') {
+    group = 'application'
+    description = 'Builds and runs the application JAR in a separate process (non-blocking)'
+    
+    dependsOn 'jar'
+    
+    doLast {
+        def jarFile = jar.archiveFile.get().asFile
+        
+        println "Starting application: ${jarFile.name}"
+        println "JAR location: ${jarFile.absolutePath}"
+        
+        // Use ProcessBuilder for better control over process spawning
+        def processBuilder = new ProcessBuilder(
+            'javaw', '-jar', jarFile.absolutePath
+        )
+        processBuilder.start()
+        println "Application launched!"
+    }
 }

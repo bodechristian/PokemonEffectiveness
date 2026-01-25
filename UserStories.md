@@ -1,0 +1,3 @@
+- The user would like to not scroll a tiny dropdown window, but instead see all possible types to be selected at once
+- The user would like to more quickly find their desired to be selected type in the dropdown menu by seeing their respective color
+- The user would like to see all types in a section (e.g. 1x - Normal Damage) at once and not scroll to the side when there exist many types in a section

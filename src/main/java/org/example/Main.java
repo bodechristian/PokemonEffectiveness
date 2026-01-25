@@ -1,23 +1,31 @@
 package org.example;
 
+import org.example.pokemon.service.TypeEffectivenessCalculator;
+import org.example.pokemon.ui.PokemonTypeUI;
+
+import javax.swing.*;
+
 /**
- * Main Class.
+ * Main Class - Entry point for Pokemon Type Effectiveness Calculator.
  */
 public class Main {
     /**
-     * entry point of project.
-     * @param args the cli arguments
+     * Main method to launch the application.
      */
     public static void main(String[] args) {
-        System.out.print("Hello and welcome!");
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-        writeOut();
-
-    }
-
-    public static void writeOut() {
-        for (int i = 1; i <= 5; i++) {
-            System.out.println("i = " + i);
-        }
+            // Dependency injection: create calculator with loaded data
+            TypeEffectivenessCalculator calculator = TypeEffectivenessCalculator.createDefault();
+            
+            // Inject calculator into UI
+            PokemonTypeUI ui = new PokemonTypeUI(calculator);
+            ui.setVisible(true);
+        });
     }
 }
