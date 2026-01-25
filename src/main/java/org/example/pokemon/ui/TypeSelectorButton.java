@@ -9,20 +9,9 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.Objects;
 
-/**
- * A selectable button representing a Pokemon type.
- * Displays the type with its color and handles selection state.
- * Single Responsibility: Rendering and state management for a single type button.
- */
-public class TypeSelectorButton extends JToggleButton {
-    private static final int BUTTON_PADDING_VERTICAL = 4;
-    private static final int BUTTON_PADDING_HORIZONTAL = 8;
-    private static final int BORDER_WIDTH = 2;
-    
-    private static final Font BUTTON_FONT = new Font("Arial", Font.BOLD, 10);
-    private static final Color SELECTED_BORDER_COLOR = new Color(50, 50, 50);
-    private static final Color UNSELECTED_BORDER_COLOR = new Color(150, 150, 150);
+import static org.example.pokemon.ui.UIConstants.*;
 
+public class TypeSelectorButton extends JToggleButton {
     private final PokemonType type;
 
     /**
@@ -51,41 +40,32 @@ public class TypeSelectorButton extends JToggleButton {
         
         setBackground(type.getColor());
         setForeground(ColorUtils.getContrastingTextColor(type.getColor()));
-        setFont(BUTTON_FONT);
+        setFont(LABEL_FONT);
         setFocusPainted(false);
         setOpaque(true);
         setContentAreaFilled(true);
         setBorderPainted(true);
         
-        // Set preferred size to ensure button is large enough for text
-        setPreferredSize(new Dimension(70, 28));
-        setMinimumSize(new Dimension(70, 28));
+        setPreferredSize(new Dimension(TYPE_LABEL_WIDTH, TYPE_LABEL_HEIGHT));
+        setMinimumSize(new Dimension(TYPE_LABEL_WIDTH, TYPE_LABEL_HEIGHT));
         
         setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UNSELECTED_BORDER_COLOR, BORDER_WIDTH),
-                new EmptyBorder(BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL,
-                               BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL)
+                new LineBorder(UNSELECTED_BORDER_COLOR, NORMAL_BORDER_WIDTH),
+                new EmptyBorder(PADDING_VERTICAL, PADDING_HORIZONTAL, PADDING_VERTICAL, PADDING_HORIZONTAL)
         ));
     }
 
-    /**
-     * Configures how the button responds to selection changes.
-     */
     private void configureSelectionBehavior() {
         addItemListener(e -> updateBorderForSelection());
     }
 
-    /**
-     * Updates the border to reflect selection state.
-     */
     private void updateBorderForSelection() {
         Color borderColor = isSelected() ? SELECTED_BORDER_COLOR : UNSELECTED_BORDER_COLOR;
-        int borderWidth = isSelected() ? BORDER_WIDTH + 1 : BORDER_WIDTH;
+        int borderWidth = isSelected() ? SELECTED_BORDER_WIDTH : NORMAL_BORDER_WIDTH;
         
         setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(borderColor, borderWidth),
-                new EmptyBorder(BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL,
-                               BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL)
+                new EmptyBorder(PADDING_VERTICAL, PADDING_HORIZONTAL, PADDING_VERTICAL, PADDING_HORIZONTAL)
         ));
     }
 
@@ -119,25 +99,16 @@ public class TypeSelectorButton extends JToggleButton {
             // Draw diagonal line from bottom-left to top-right
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setStroke(new BasicStroke(4.0f)); // Make line much thicker
-            g2d.setColor(new Color(80, 80, 80)); // Much darker grey, almost black
-            g2d.drawLine(0, getHeight(), getWidth(), 0); // Bottom-left to top-right
+            g2d.setStroke(new BasicStroke(DISABLED_LINE_WIDTH));
+            g2d.setColor(new Color(80, 80, 80));
+            g2d.drawLine(0, getHeight(), getWidth(), 0);
         }
     }
     
-    /**
-     * Override setEnabled to also update visual appearance.
-     */
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        if (!enabled) {
-            // Make text grey when disabled
-            setForeground(Color.GRAY);
-        } else {
-            // Restore proper text color using ColorUtils
-            setForeground(ColorUtils.getContrastingTextColor(type.getColor()));
-        }
+        setForeground(enabled ? ColorUtils.getContrastingTextColor(type.getColor()) : Color.GRAY);
         repaint();
     }
 }

@@ -11,30 +11,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * A panel containing selectable buttons for all Pokemon types.
- * Single Responsibility: Managing type selection UI and notifying listeners of changes.
- */
-public class TypeSelectorPanel extends JPanel {
-    private static final int GRID_COLUMNS = 4;
-    private static final int HORIZONTAL_GAP = 4;
-    private static final int VERTICAL_GAP = 4;
-    private static final int PANEL_PADDING = 8;
-    
-    private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 13);
+import static org.example.pokemon.ui.UIConstants.*;
 
+public class TypeSelectorPanel extends JPanel {
     private final List<TypeSelectorButton> typeButtons;
     private final ButtonGroup buttonGroup;
     private final boolean allowNoneSelection;
     private final List<Consumer<PokemonType>> selectionListeners;
     private PokemonType lastSelectedType = PokemonType.NONE;
 
-    /**
-     * Creates a type selector panel.
-     *
-     * @param title the title to display for this panel
-     * @param allowNoneSelection whether to allow deselecting (NONE selection)
-     */
     public TypeSelectorPanel(String title, boolean allowNoneSelection) {
         this.allowNoneSelection = allowNoneSelection;
         this.typeButtons = new ArrayList<>();
@@ -57,12 +42,9 @@ public class TypeSelectorPanel extends JPanel {
         add(gridPanel, BorderLayout.CENTER);
     }
 
-    /**
-     * Creates the grid panel containing all type buttons.
-     */
     private JPanel createGridPanel() {
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(0, GRID_COLUMNS, HORIZONTAL_GAP, VERTICAL_GAP));
+        panel.setLayout(new GridLayout(0, GRID_COLUMNS, TYPE_PANEL_GAP, TYPE_PANEL_GAP));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(PANEL_PADDING, PANEL_PADDING, PANEL_PADDING, PANEL_PADDING));
 
@@ -75,10 +57,7 @@ public class TypeSelectorPanel extends JPanel {
             button.addActionListener(e -> handleButtonSelection(button));
             
             typeButtons.add(button);
-            
-            // Always use ButtonGroup to prevent multiple selections
             buttonGroup.add(button);
-            
             panel.add(button);
         }
 

@@ -24,24 +24,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-/**
- * Main UI for the Pokemon Type Effectiveness Calculator.
- * Follows Single Responsibility: Only handles UI coordination and layout.
- */
+import static org.example.pokemon.ui.UIConstants.*;
+
 public class PokemonTypeUI extends JFrame {
-    // UI dimension constants
-    private static final int WINDOW_WIDTH = 720;
-    private static final int PANEL_PADDING = 15;
-    private static final int PANEL_GAP = 10;
-    private static final int VERTICAL_SPACING = 3;
     private static final int SELECTOR_SPACING = 20;
-
-    // Layout constants for result groups - use WrapLayout for wrapping
-    private static final int TYPE_PANEL_GAP = 4;
-    private static final int GROUP_PANEL_PADDING = 8;
-
-    // Font constants
-    private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 14);
 
     private final TypeEffectivenessCalculator calculator;
     private final TypeLabelRenderer labelRenderer;
@@ -136,7 +122,7 @@ public class PokemonTypeUI extends JFrame {
      */
     private JPanel createMainPanel() {
         JPanel panel = new JPanel(new BorderLayout(PANEL_GAP, PANEL_GAP));
-        panel.setBorder(new EmptyBorder(PANEL_PADDING, PANEL_PADDING, PANEL_PADDING, PANEL_PADDING));
+        panel.setBorder(new EmptyBorder(MAIN_PANEL_PADDING, MAIN_PANEL_PADDING, MAIN_PANEL_PADDING, MAIN_PANEL_PADDING));
         panel.setBackground(Color.WHITE);
         return panel;
     }
@@ -268,7 +254,7 @@ public class PokemonTypeUI extends JFrame {
             if (!types.isEmpty()) {
                 JPanel groupPanel = createGroupPanel(multiplier, types);
                 resultsPanel.add(groupPanel);
-                resultsPanel.add(componentFactory.createVerticalSpacing(VERTICAL_SPACING));
+                resultsPanel.add(componentFactory.createVerticalSpacing(RESULTS_VERTICAL_SPACING));
             }
         }
     }
@@ -304,8 +290,8 @@ public class PokemonTypeUI extends JFrame {
         // Add padding around the border using CompoundBorder with EmptyBorder for internal padding
         panel.setBorder(BorderFactory.createCompoundBorder(
                 border,
-                new EmptyBorder(GROUP_PANEL_PADDING, GROUP_PANEL_PADDING,
-                                GROUP_PANEL_PADDING, GROUP_PANEL_PADDING)
+                new EmptyBorder(PANEL_PADDING, PANEL_PADDING,
+                                PANEL_PADDING, PANEL_PADDING)
         ));
 
         // Add type labels using renderer
