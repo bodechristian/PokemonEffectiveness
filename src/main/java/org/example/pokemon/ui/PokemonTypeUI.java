@@ -71,6 +71,9 @@ public class PokemonTypeUI extends JFrame {
         // Set default selection for type 1
         type1Selector.setSelectedType(PokemonType.NORMAL);
         
+        // Disable the matching type in Type 2 panel
+        type2Selector.setDisabledType(PokemonType.NORMAL);
+        
         // Create selector panels with displays
         JPanel type1Container = createSelectorContainer(type1Display, type1Selector);
         JPanel type2Container = createSelectorContainer(type2Display, type2Selector);
@@ -100,9 +103,9 @@ public class PokemonTypeUI extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
 
-        // Add listeners
-        type1Selector.addSelectionListener(type -> updateResults());
-        type2Selector.addSelectionListener(type -> updateResults());
+        // Add listeners with validation to prevent duplicate type selection
+        type1Selector.addSelectionListener(type -> handleType1Selection(type));
+        type2Selector.addSelectionListener(type -> handleType2Selection(type));
 
         // Initial calculation
         updateResults();
@@ -180,6 +183,31 @@ public class PokemonTypeUI extends JFrame {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         return scrollPane;
+    }
+    
+    /**
+     * Handles Type 1 selection with validation to prevent duplicate types.
+     */
+    private void handleType1Selection(PokemonType selectedType) {
+        // Update Type 2 panel to disable the button matching Type 1
+        // This may trigger handleType2Selection if Type 2 gets cleared
+        boolean type2WasCleared = type2Selector.getSelectedType() == selectedType;
+        type2Selector.setDisabledType(selectedType);
+        
+        // Only update results if Type 2 wasn't cleared (to avoid double update)
+        // If it was cleared, handleType2Selection will be called automatically
+        if (!type2WasCleared) {
+            updateResults();
+        }
+    }
+    
+    /**
+     * Handles Type 2 selection with validation to prevent duplicate types.
+     */
+    private void handleType2Selection(PokemonType selectedType) {
+        // The button should already be disabled if it matches Type 1,
+        // but this is called if the selection changes
+        updateResults();
     }
 
     /**

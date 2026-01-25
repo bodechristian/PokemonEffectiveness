@@ -27,6 +27,7 @@ public class TypeSelectorPanel extends JPanel {
     private final ButtonGroup buttonGroup;
     private final boolean allowNoneSelection;
     private final List<Consumer<PokemonType>> selectionListeners;
+    private PokemonType lastSelectedType = PokemonType.NONE;
 
     /**
      * Creates a type selector panel.
@@ -90,16 +91,19 @@ public class TypeSelectorPanel extends JPanel {
     private void handleButtonSelection(TypeSelectorButton button) {
         if (allowNoneSelection) {
             // For optional type, allow clicking the same button to deselect
-            if (!button.isSelected()) {
-                // Button was deselected (clicked when already selected)
+            if (button.getType() == lastSelectedType) {
+                // User clicked the already-selected button - deselect it
                 buttonGroup.clearSelection();
+                lastSelectedType = PokemonType.NONE;
                 notifySelectionChanged(PokemonType.NONE);
             } else {
-                // Button was selected
+                // Button was selected (different button)
+                lastSelectedType = button.getType();
                 notifySelectionChanged(button.getType());
             }
         } else {
             // For mandatory type, always notify of the selection
+            lastSelectedType = button.getType();
             notifySelectionChanged(button.getType());
         }
     }
@@ -151,6 +155,8 @@ public class TypeSelectorPanel extends JPanel {
         
         if (type == PokemonType.NONE) {
             clearSelection();
+        } else {
+            lastSelectedType = type;
         }
     }
 
@@ -164,6 +170,28 @@ public class TypeSelectorPanel extends JPanel {
         
         for (TypeSelectorButton button : typeButtons) {
             button.setSelected(false);
+        }
+        lastSelectedType = PokemonType.NONE;
+    }
+    
+    /**
+     * Disables the button for a specific type to prevent duplicate selection.
+     * 
+     * @param type the type to disable, or null to enable all buttons
+     */
+    public void setDisabledType(PokemonType type) {
+        for (TypeSelectorButton button : typeButtons) {
+            if (type != null && button.getType() == type) {
+                // If this button is currently selected, deselect it first
+                if (button.isSelected()) {
+                    buttonGroup.clearSelection();
+                    lastSelectedType = PokemonType.NONE;
+                    notifySelectionChanged(PokemonType.NONE);
+                }
+                button.setEnabled(false);
+            } else {
+                button.setEnabled(true);
+            }
         }
     }
 }

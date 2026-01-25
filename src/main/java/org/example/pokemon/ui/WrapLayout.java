@@ -8,24 +8,6 @@ import java.util.Objects;
  * Similar to FlowLayout but properly respects the container's width for wrapping.
  */
 public class WrapLayout extends FlowLayout {
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Creates a WrapLayout with centered alignment and default gaps.
-     */
-    public WrapLayout() {
-        super();
-    }
-
-    /**
-     * Creates a WrapLayout with specified alignment and default gaps.
-     *
-     * @param align the alignment value (LEFT, CENTER, RIGHT, LEADING, TRAILING)
-     */
-    public WrapLayout(int align) {
-        super(align);
-    }
-
     /**
      * Creates a WrapLayout with specified alignment and gaps.
      *

@@ -118,6 +118,36 @@ public class TypeSelectorButton extends JToggleButton {
             g.setColor(getBackground());
             g.fillRect(0, 0, getWidth(), getHeight());
         }
+        
+        // If disabled, paint a semi-transparent grey overlay and diagonal line
+        if (!isEnabled()) {
+            g.setColor(new Color(220, 220, 220, 200));
+            g.fillRect(0, 0, getWidth(), getHeight());
+            
+            // Draw diagonal line from bottom-left to top-right
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setStroke(new BasicStroke(4.0f)); // Make line much thicker
+            g2d.setColor(new Color(80, 80, 80)); // Much darker grey, almost black
+            g2d.drawLine(0, getHeight(), getWidth(), 0); // Bottom-left to top-right
+        }
+        
         super.paintComponent(g);
+    }
+    
+    /**
+     * Override setEnabled to also update visual appearance.
+     */
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        if (!enabled) {
+            // Make text grey when disabled
+            setForeground(Color.GRAY);
+        } else {
+            // Restore proper text color
+            setForeground(calculateTextColor(type.getColor()));
+        }
+        repaint();
     }
 }
