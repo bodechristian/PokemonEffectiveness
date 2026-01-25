@@ -1,6 +1,7 @@
 package org.example.pokemon.ui;
 
 import org.example.pokemon.model.PokemonType;
+import org.example.pokemon.ui.util.ColorUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,7 +12,6 @@ import java.awt.*;
  * Single Responsibility: Only handles visual rendering of type badges.
  */
 public class TypeLabelRenderer {
-    private static final int BRIGHTNESS_THRESHOLD = 160;
     private static final int LABEL_PADDING_VERTICAL = 4;
     private static final int LABEL_PADDING_HORIZONTAL = 8;
     private static final int BORDER_WIDTH = 1;
@@ -32,7 +32,7 @@ public class TypeLabelRenderer {
         JLabel label = new JLabel(type.getDisplayName());
         label.setOpaque(true);
         label.setBackground(type.getColor());
-        label.setForeground(calculateTextColor(type.getColor()));
+        label.setForeground(ColorUtils.getContrastingTextColor(type.getColor()));
         label.setFont(LABEL_FONT);
         label.setBorder(createLabelBorder());
         label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -42,18 +42,6 @@ public class TypeLabelRenderer {
         label.setMinimumSize(new Dimension(70, 28));
 
         return label;
-    }
-
-    /**
-     * Calculates appropriate text color based on background brightness.
-     * Uses white text for dark backgrounds, black for light backgrounds.
-     */
-    private Color calculateTextColor(Color backgroundColor) {
-        int brightness = (backgroundColor.getRed() 
-                        + backgroundColor.getGreen() 
-                        + backgroundColor.getBlue()) / 3;
-        
-        return brightness < BRIGHTNESS_THRESHOLD ? Color.WHITE : Color.BLACK;
     }
 
     /**

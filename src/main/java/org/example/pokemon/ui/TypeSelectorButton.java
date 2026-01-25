@@ -1,6 +1,7 @@
 package org.example.pokemon.ui;
 
 import org.example.pokemon.model.PokemonType;
+import org.example.pokemon.ui.util.ColorUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,7 +18,6 @@ public class TypeSelectorButton extends JToggleButton {
     private static final int BUTTON_PADDING_VERTICAL = 4;
     private static final int BUTTON_PADDING_HORIZONTAL = 8;
     private static final int BORDER_WIDTH = 2;
-    private static final int BRIGHTNESS_THRESHOLD = 160;
     
     private static final Font BUTTON_FONT = new Font("Arial", Font.BOLD, 10);
     private static final Color SELECTED_BORDER_COLOR = new Color(50, 50, 50);
@@ -50,7 +50,7 @@ public class TypeSelectorButton extends JToggleButton {
         setUI(new javax.swing.plaf.basic.BasicToggleButtonUI());
         
         setBackground(type.getColor());
-        setForeground(calculateTextColor(type.getColor()));
+        setForeground(ColorUtils.getContrastingTextColor(type.getColor()));
         setFont(BUTTON_FONT);
         setFocusPainted(false);
         setOpaque(true);
@@ -87,17 +87,6 @@ public class TypeSelectorButton extends JToggleButton {
                 new EmptyBorder(BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL,
                                BUTTON_PADDING_VERTICAL, BUTTON_PADDING_HORIZONTAL)
         ));
-    }
-
-    /**
-     * Calculates appropriate text color based on background brightness.
-     */
-    private Color calculateTextColor(Color backgroundColor) {
-        int brightness = (backgroundColor.getRed() 
-                        + backgroundColor.getGreen() 
-                        + backgroundColor.getBlue()) / 3;
-        
-        return brightness < BRIGHTNESS_THRESHOLD ? Color.WHITE : Color.BLACK;
     }
 
     /**
@@ -146,8 +135,8 @@ public class TypeSelectorButton extends JToggleButton {
             // Make text grey when disabled
             setForeground(Color.GRAY);
         } else {
-            // Restore proper text color
-            setForeground(calculateTextColor(type.getColor()));
+            // Restore proper text color using ColorUtils
+            setForeground(ColorUtils.getContrastingTextColor(type.getColor()));
         }
         repaint();
     }

@@ -4,11 +4,21 @@ import org.example.pokemon.model.EffectivenessMultiplier;
 import org.example.pokemon.model.PokemonType;
 import org.example.pokemon.service.TypeEffectivenessCalculator;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,21 +35,22 @@ public class PokemonTypeUI extends JFrame {
     private static final int PANEL_GAP = 10;
     private static final int VERTICAL_SPACING = 3;
     private static final int SELECTOR_SPACING = 20;
-    
+
     // Layout constants for result groups - use WrapLayout for wrapping
     private static final int TYPE_PANEL_GAP = 4;
     private static final int GROUP_PANEL_PADDING = 8;
-    
+
     // Font constants
     private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 14);
 
     private final TypeEffectivenessCalculator calculator;
     private final TypeLabelRenderer labelRenderer;
-    
+    private final UIComponentFactory componentFactory;
+
     private final TypeSelectorPanel type1Selector;
     private final TypeSelectorPanel type2Selector;
     private final JPanel resultsPanel;
-    
+
     // Display panels for currently selected types
     private final JPanel type1Display;
     private final JPanel type2Display;
@@ -52,6 +63,7 @@ public class PokemonTypeUI extends JFrame {
     public PokemonTypeUI(TypeEffectivenessCalculator calculator) {
         this.calculator = Objects.requireNonNull(calculator, "Calculator cannot be null");
         this.labelRenderer = new TypeLabelRenderer();
+        this.componentFactory = new UIComponentFactory();
 
         // Frame setup
         configureFrame();
@@ -59,46 +71,43 @@ public class PokemonTypeUI extends JFrame {
         // Create UI components
         JPanel mainPanel = createMainPanel();
         this.resultsPanel = createResultsPanel();
-        
+
         // Create type selectors
         this.type1Selector = new TypeSelectorPanel("Defending Type 1 (Required)", false);
         this.type2Selector = new TypeSelectorPanel("Defending Type 2 (Optional)", true);
-        
-        // Create selected type display panels
-        this.type1Display = createSelectedTypeDisplay();
-        this.type2Display = createSelectedTypeDisplay();
-        
+
+        // Create selected type display panels using factory
+        this.type1Display = componentFactory.createSelectedTypeDisplayPanel();
+        this.type2Display = componentFactory.createSelectedTypeDisplayPanel();
+
         // Set default selection for type 1
         type1Selector.setSelectedType(PokemonType.NORMAL);
-        
+
         // Disable the matching type in Type 2 panel
         type2Selector.setDisabledType(PokemonType.NORMAL);
-        
-        // Create selector panels with displays
-        JPanel type1Container = createSelectorContainer(type1Display, type1Selector);
-        JPanel type2Container = createSelectorContainer(type2Display, type2Selector);
-        
+
+        // Create selector panels with displays using factory
+        JPanel type1Container = componentFactory.createSelectorContainer(type1Display, type1Selector);
+        JPanel type2Container = componentFactory.createSelectorContainer(type2Display, type2Selector);
+
         // Create main selectors panel
         JPanel selectorsPanel = createSelectorsPanel();
         selectorsPanel.add(type1Container);
-        selectorsPanel.add(Box.createHorizontalStrut(SELECTOR_SPACING));
+        selectorsPanel.add(componentFactory.createHorizontalSpacing(SELECTOR_SPACING));
         selectorsPanel.add(type2Container);
-        
-        // Create separator between selectors and results
-        JSeparator separator = new JSeparator(JSeparator.HORIZONTAL);
-        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
-        
+
+        // Create separator between selectors and results using factory
+        JSeparator separator = componentFactory.createHorizontalSeparator();
+
         JScrollPane scrollPane = createScrollPane();
 
         // Assemble layout with separator
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBackground(Color.WHITE);
+        JPanel topPanel = componentFactory.createVerticalPanel();
         topPanel.add(selectorsPanel);
-        topPanel.add(Box.createVerticalStrut(10));
+        topPanel.add(componentFactory.createVerticalSpacing(10));
         topPanel.add(separator);
-        topPanel.add(Box.createVerticalStrut(10));
-        
+        topPanel.add(componentFactory.createVerticalSpacing(10));
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
@@ -141,28 +150,6 @@ public class PokemonTypeUI extends JFrame {
         panel.setBackground(Color.WHITE);
         return panel;
     }
-    
-    /**
-     * Creates a panel to display the currently selected type.
-     */
-    private JPanel createSelectedTypeDisplay() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 5));
-        panel.setBackground(Color.WHITE);
-        return panel;
-    }
-    
-    /**
-     * Creates a container that combines the selected type display and selector panel.
-     */
-    private JPanel createSelectorContainer(JPanel displayPanel, TypeSelectorPanel selectorPanel) {
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBackground(Color.WHITE);
-        container.add(displayPanel);
-        container.add(selectorPanel);
-        return container;
-    }
 
     /**
      * Creates the results panel.
@@ -178,13 +165,9 @@ public class PokemonTypeUI extends JFrame {
      * Creates a scroll pane for the results.
      */
     private JScrollPane createScrollPane() {
-        JScrollPane scrollPane = new JScrollPane(resultsPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        return scrollPane;
+        return componentFactory.createResultsScrollPane(resultsPanel);
     }
-    
+
     /**
      * Handles Type 1 selection with validation to prevent duplicate types.
      */
@@ -193,14 +176,14 @@ public class PokemonTypeUI extends JFrame {
         // This may trigger handleType2Selection if Type 2 gets cleared
         boolean type2WasCleared = type2Selector.getSelectedType() == selectedType;
         type2Selector.setDisabledType(selectedType);
-        
+
         // Only update results if Type 2 wasn't cleared (to avoid double update)
         // If it was cleared, handleType2Selection will be called automatically
         if (!type2WasCleared) {
             updateResults();
         }
     }
-    
+
     /**
      * Handles Type 2 selection with validation to prevent duplicate types.
      */
@@ -223,7 +206,7 @@ public class PokemonTypeUI extends JFrame {
         if (type2 == null) {
             type2 = PokemonType.NONE;
         }
-        
+
         // Update the selected type displays
         updateSelectedTypeDisplay(type1Display, type1);
         updateSelectedTypeDisplay(type2Display, type2);
@@ -233,80 +216,31 @@ public class PokemonTypeUI extends JFrame {
 
         resultsPanel.revalidate();
         resultsPanel.repaint();
-        
+
         // Adjust window height to fit content
         adjustWindowHeight();
     }
-    
+
     /**
      * Updates a selected type display panel with the current type button.
      */
     private void updateSelectedTypeDisplay(JPanel displayPanel, PokemonType type) {
         displayPanel.removeAll();
-        
+
         if (type != null && type != PokemonType.NONE) {
-            // Create a label that looks like the selected button
-            JLabel displayLabel = createSelectedTypeLabel(type);
+            // Create a label that looks like the selected button using factory
+            JLabel displayLabel = componentFactory.createSelectedTypeLabel(type);
             displayPanel.add(displayLabel);
         } else {
-            // Create an empty placeholder button for "none selected"
-            JLabel emptyLabel = createEmptyTypeLabel();
+            // Create an empty placeholder button for "none selected" using factory
+            JLabel emptyLabel = componentFactory.createEmptyTypeLabel();
             displayPanel.add(emptyLabel);
         }
-        
+
         displayPanel.revalidate();
         displayPanel.repaint();
     }
-    
-    /**
-     * Creates a label that looks like a selected type button.
-     */
-    private JLabel createSelectedTypeLabel(PokemonType type) {
-        JLabel label = new JLabel(type.getDisplayName());
-        label.setOpaque(true);
-        label.setBackground(type.getColor());
-        
-        // Calculate text color based on background brightness
-        int brightness = (type.getColor().getRed() 
-                        + type.getColor().getGreen() 
-                        + type.getColor().getBlue()) / 3;
-        label.setForeground(brightness < 160 ? Color.WHITE : Color.BLACK);
-        
-        label.setFont(new Font("Arial", Font.BOLD, 10));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setPreferredSize(new Dimension(70, 28));
-        label.setMinimumSize(new Dimension(70, 28));
-        
-        // Bold border to show it's selected
-        label.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(50, 50, 50), 3),
-                new EmptyBorder(4, 8, 4, 8)
-        ));
-        
-        return label;
-    }
-    
-    /**
-     * Creates an empty label to show no type is selected.
-     */
-    private JLabel createEmptyTypeLabel() {
-        JLabel label = new JLabel("None");
-        label.setOpaque(false);
-        label.setForeground(Color.GRAY);
-        label.setFont(new Font("Arial", Font.PLAIN, 10));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setPreferredSize(new Dimension(70, 28));
-        label.setMinimumSize(new Dimension(70, 28));
-        
-        // Just a border to show the empty state
-        label.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.LIGHT_GRAY, 2),
-                new EmptyBorder(4, 8, 4, 8)
-        ));
-        
-        return label;
-    }
-    
+
     /**
      * Adjusts the window height to fit all content without extra whitespace.
      */
@@ -334,7 +268,7 @@ public class PokemonTypeUI extends JFrame {
             if (!types.isEmpty()) {
                 JPanel groupPanel = createGroupPanel(multiplier, types);
                 resultsPanel.add(groupPanel);
-                resultsPanel.add(Box.createVerticalStrut(VERTICAL_SPACING));
+                resultsPanel.add(componentFactory.createVerticalSpacing(VERTICAL_SPACING));
             }
         }
     }
@@ -352,7 +286,7 @@ public class PokemonTypeUI extends JFrame {
                 return new Dimension(Integer.MAX_VALUE, pref.height);
             }
         };
-        
+
         // Use WrapLayout instead of FlowLayout for proper wrapping
         panel.setLayout(new WrapLayout(FlowLayout.LEFT, TYPE_PANEL_GAP, TYPE_PANEL_GAP));
         panel.setBackground(Color.WHITE);
@@ -366,12 +300,12 @@ public class PokemonTypeUI extends JFrame {
                 TitledBorder.TOP,
                 TITLE_FONT
         );
-        
+
         // Add padding around the border using CompoundBorder with EmptyBorder for internal padding
         panel.setBorder(BorderFactory.createCompoundBorder(
                 border,
-                new EmptyBorder(GROUP_PANEL_PADDING, GROUP_PANEL_PADDING, 
-                              GROUP_PANEL_PADDING, GROUP_PANEL_PADDING)
+                new EmptyBorder(GROUP_PANEL_PADDING, GROUP_PANEL_PADDING,
+                                GROUP_PANEL_PADDING, GROUP_PANEL_PADDING)
         ));
 
         // Add type labels using renderer
