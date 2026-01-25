@@ -1,3 +1,5 @@
+import org.gradle.internal.jvm.Jvm
+
 plugins {
     id 'java'
     id 'application'
@@ -62,5 +64,74 @@ tasks.register('runJar') {
         } catch (IOException e) {
             throw new GradleException("Failed to start application: ${e.message}", e)
         }
+    }
+}
+
+/**
+ * Creates a native Windows executable using jpackage.
+ * Output will be in build/jpackage/
+ */
+tasks.register('createExe', Exec) {
+    group = 'distribution'
+    description = 'Creates a Windows .exe using jpackage (Windows only)'
+
+    dependsOn jar
+
+    // Only run on Windows
+    onlyIf {
+        org.gradle.internal.os.OperatingSystem.current().isWindows()
+    }
+
+    def jarFile = jar.archiveFile.get().asFile
+    def outputDir = layout.buildDirectory.dir('jpackage').get().asFile
+    def appName = 'PokemonTypeCalculator'
+
+    // Declare inputs and outputs for up-to-date checking
+    inputs.file(jarFile)
+    outputs.dir(outputDir)
+
+    doFirst {
+        // Find jpackage in current JDK
+        def javaHome = Jvm.current().javaHome
+        def jpackageExe = new File(javaHome, 'bin/jpackage.exe')
+
+        if (!jpackageExe.exists()) {
+            throw new GradleException(
+                    "jpackage not found at ${jpackageExe.absolutePath}\n" +
+                            "Requires JDK 14+ (not JRE). Current Java home: ${javaHome}"
+            )
+        }
+
+        // Clean output directory
+        delete outputDir
+        outputDir.mkdirs()
+
+        println "Creating Windows executable with jpackage..."
+        println "JDK: ${javaHome}"
+        println "jpackage: ${jpackageExe.absolutePath}"
+        println "JAR: ${jarFile.absolutePath}"
+        println "Output: ${outputDir.absolutePath}"
+        println ""
+
+        // Configure command line
+        commandLine jpackageExe.absolutePath,
+                '--type', 'app-image',
+                '--input', jarFile.parent,
+                '--name', appName,
+                '--main-jar', jarFile.name,
+                '--main-class', 'org.example.Main',
+                '--dest', outputDir.absolutePath,
+                '--app-version', '1.0',
+                '--description', 'Pokemon Type Effectiveness Calculator',
+                '--vendor', 'Example'
+    }
+
+    doLast {
+        def exePath = new File(outputDir, "${appName}/${appName}.exe")
+        println ""
+        println "✓ Executable created successfully!"
+        println "Location: ${exePath.absolutePath}"
+        println ""
+        println "You can now run: ${exePath.absolutePath}"
     }
 }
