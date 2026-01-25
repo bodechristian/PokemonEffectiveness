@@ -119,7 +119,10 @@ public class TypeSelectorButton extends JToggleButton {
             g.fillRect(0, 0, getWidth(), getHeight());
         }
         
-        // If disabled, paint a semi-transparent grey overlay and diagonal line
+        super.paintComponent(g);
+        
+        // If disabled, paint a semi-transparent grey overlay and diagonal line AFTER super.paintComponent
+        // This ensures the line is drawn on top of the text
         if (!isEnabled()) {
             g.setColor(new Color(220, 220, 220, 200));
             g.fillRect(0, 0, getWidth(), getHeight());
@@ -131,8 +134,6 @@ public class TypeSelectorButton extends JToggleButton {
             g2d.setColor(new Color(80, 80, 80)); // Much darker grey, almost black
             g2d.drawLine(0, getHeight(), getWidth(), 0); // Bottom-left to top-right
         }
-        
-        super.paintComponent(g);
     }
     
     /**
