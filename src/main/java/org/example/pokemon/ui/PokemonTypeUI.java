@@ -19,26 +19,24 @@ import java.util.TreeMap;
  */
 public class PokemonTypeUI extends JFrame {
     // UI dimension constants
-    private static final int WINDOW_WIDTH = 700;
-    private static final int WINDOW_HEIGHT = 600;
+    private static final int WINDOW_WIDTH = 720;
     private static final int PANEL_PADDING = 15;
     private static final int PANEL_GAP = 10;
-    private static final int VERTICAL_SPACING = 10;
+    private static final int VERTICAL_SPACING = 3;
+    private static final int SELECTOR_SPACING = 20;
     
-    // Layout constants
-    private static final int FLOW_HORIZONTAL_GAP = 15;
-    private static final int FLOW_VERTICAL_GAP = 10;
-    private static final int TYPE_PANEL_GAP = 8;
+    // Layout constants for result groups - use WrapLayout for wrapping
+    private static final int TYPE_PANEL_GAP = 4;
+    private static final int GROUP_PANEL_PADDING = 8;
     
     // Font constants
     private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 14);
 
     private final TypeEffectivenessCalculator calculator;
     private final TypeLabelRenderer labelRenderer;
-    private final UIComponentFactory componentFactory;
     
-    private final JComboBox<PokemonType> type1Dropdown;
-    private final JComboBox<PokemonType> type2Dropdown;
+    private final TypeSelectorPanel type1Selector;
+    private final TypeSelectorPanel type2Selector;
     private final JPanel resultsPanel;
 
     /**
@@ -49,31 +47,37 @@ public class PokemonTypeUI extends JFrame {
     public PokemonTypeUI(TypeEffectivenessCalculator calculator) {
         this.calculator = Objects.requireNonNull(calculator, "Calculator cannot be null");
         this.labelRenderer = new TypeLabelRenderer();
-        this.componentFactory = new UIComponentFactory();
 
         // Frame setup
         configureFrame();
 
         // Create UI components
         JPanel mainPanel = createMainPanel();
-        JPanel topPanel = createTopPanel();
+        JPanel selectorsPanel = createSelectorsPanel();
         this.resultsPanel = createResultsPanel();
         
-        this.type1Dropdown = componentFactory.createTypeDropdown(false);
-        this.type2Dropdown = componentFactory.createTypeDropdown(true);
+        // Create type selectors
+        this.type1Selector = new TypeSelectorPanel("Defending Type 1 (Required)", false);
+        this.type2Selector = new TypeSelectorPanel("Defending Type 2 (Optional)", true);
         
-        setupTopPanel(topPanel);
+        // Set default selection for type 1
+        type1Selector.setSelectedType(PokemonType.NORMAL);
+        
+        // Add to selectors panel
+        selectorsPanel.add(type1Selector);
+        selectorsPanel.add(Box.createHorizontalStrut(SELECTOR_SPACING));
+        selectorsPanel.add(type2Selector);
         
         JScrollPane scrollPane = createScrollPane();
 
         // Assemble layout
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(selectorsPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
 
         // Add listeners
-        type1Dropdown.addActionListener(e -> updateResults());
-        type2Dropdown.addActionListener(e -> updateResults());
+        type1Selector.addSelectionListener(type -> updateResults());
+        type2Selector.addSelectionListener(type -> updateResults());
 
         // Initial calculation
         updateResults();
@@ -85,8 +89,9 @@ public class PokemonTypeUI extends JFrame {
     private void configureFrame() {
         setTitle("Pokemon Type Effectiveness Calculator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        setSize(WINDOW_WIDTH, 600); // Initial height, will be adjusted dynamically
         setLocationRelativeTo(null);
+        setResizable(true);
     }
 
     /**
@@ -100,22 +105,13 @@ public class PokemonTypeUI extends JFrame {
     }
 
     /**
-     * Creates the top panel for type selection.
+     * Creates the panel that will contain both type selectors.
      */
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, FLOW_HORIZONTAL_GAP, FLOW_VERTICAL_GAP));
+    private JPanel createSelectorsPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.setBackground(Color.WHITE);
         return panel;
-    }
-
-    /**
-     * Sets up the top panel with dropdowns.
-     */
-    private void setupTopPanel(JPanel topPanel) {
-        topPanel.add(componentFactory.createLabel("Defending Type 1:"));
-        topPanel.add(type1Dropdown);
-        topPanel.add(componentFactory.createLabel("Defending Type 2:"));
-        topPanel.add(type2Dropdown);
     }
 
     /**
@@ -134,6 +130,7 @@ public class PokemonTypeUI extends JFrame {
     private JScrollPane createScrollPane() {
         JScrollPane scrollPane = new JScrollPane(resultsPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         return scrollPane;
     }
@@ -144,12 +141,8 @@ public class PokemonTypeUI extends JFrame {
     private void updateResults() {
         resultsPanel.removeAll();
 
-        PokemonType type1 = (PokemonType) type1Dropdown.getSelectedItem();
-        PokemonType type2 = (PokemonType) type2Dropdown.getSelectedItem();
-
-        if (type1 == null) {
-            return;
-        }
+        PokemonType type1 = type1Selector.getSelectedType();
+        PokemonType type2 = type2Selector.getSelectedType();
 
         // Ensure type2 is never null
         if (type2 == null) {
@@ -161,6 +154,20 @@ public class PokemonTypeUI extends JFrame {
 
         resultsPanel.revalidate();
         resultsPanel.repaint();
+        
+        // Adjust window height to fit content
+        adjustWindowHeight();
+    }
+    
+    /**
+     * Adjusts the window height to fit all content without extra whitespace.
+     */
+    private void adjustWindowHeight() {
+        // Use invokeLater to ensure layout is complete before calculating size
+        SwingUtilities.invokeLater(() -> {
+            pack(); // Resizes window to fit preferred size of components
+            setSize(WINDOW_WIDTH, getHeight()); // Keep width fixed, use calculated height
+        });
     }
 
     /**
@@ -186,10 +193,20 @@ public class PokemonTypeUI extends JFrame {
 
     /**
      * Creates a panel for a specific effectiveness group.
+     * Uses WrapLayout to ensure types wrap instead of requiring horizontal scroll.
      */
     private JPanel createGroupPanel(double multiplier, List<PokemonType> types) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, TYPE_PANEL_GAP, TYPE_PANEL_GAP));
+        // Create custom panel that properly calculates max size for wrapping
+        JPanel panel = new JPanel() {
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension pref = getPreferredSize();
+                return new Dimension(Integer.MAX_VALUE, pref.height);
+            }
+        };
+        
+        // Use WrapLayout instead of FlowLayout for proper wrapping
+        panel.setLayout(new WrapLayout(FlowLayout.LEFT, TYPE_PANEL_GAP, TYPE_PANEL_GAP));
         panel.setBackground(Color.WHITE);
 
         // Create title using value object
@@ -201,7 +218,13 @@ public class PokemonTypeUI extends JFrame {
                 TitledBorder.TOP,
                 TITLE_FONT
         );
-        panel.setBorder(border);
+        
+        // Add padding around the border using CompoundBorder with EmptyBorder for internal padding
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                border,
+                new EmptyBorder(GROUP_PANEL_PADDING, GROUP_PANEL_PADDING, 
+                              GROUP_PANEL_PADDING, GROUP_PANEL_PADDING)
+        ));
 
         // Add type labels using renderer
         for (PokemonType type : types) {

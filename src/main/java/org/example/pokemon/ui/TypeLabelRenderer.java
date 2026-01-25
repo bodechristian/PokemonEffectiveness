@@ -12,11 +12,11 @@ import java.awt.*;
  */
 public class TypeLabelRenderer {
     private static final int BRIGHTNESS_THRESHOLD = 160;
-    private static final int LABEL_PADDING_VERTICAL = 5;
-    private static final int LABEL_PADDING_HORIZONTAL = 10;
+    private static final int LABEL_PADDING_VERTICAL = 4;
+    private static final int LABEL_PADDING_HORIZONTAL = 8;
     private static final int BORDER_WIDTH = 1;
     
-    private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
+    private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 10);
 
     /**
      * Creates a color-coded label for a Pokemon type.
@@ -36,6 +36,10 @@ public class TypeLabelRenderer {
         label.setFont(LABEL_FONT);
         label.setBorder(createLabelBorder());
         label.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        // Match the size of selector buttons
+        label.setPreferredSize(new Dimension(70, 28));
+        label.setMinimumSize(new Dimension(70, 28));
 
         return label;
     }
