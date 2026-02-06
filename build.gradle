@@ -4,3 +4,10 @@
  * This is a general purpose Gradle build.
  * Learn more about Gradle by exploring our Samples at https://docs.gradle.org/8.14/samples
  */
+
+
+tasks.register('runAll') {
+    group='application'
+
+    dependsOn(':backend:run', ':end:bootRun', ':frontend:pnpmRunDev')
+}

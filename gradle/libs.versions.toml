@@ -1,0 +1,11 @@
+[versions]
+spring-boot = "4.0.2"
+spring-dependency-management = "1.1.7"
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+
+[libraries]
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+lombok = { group = "org.projectlombok", name = "lombok"}

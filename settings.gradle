@@ -6,4 +6,4 @@
  */
 
 rootProject.name = 'PokemonEffectiveness'
-include('backend', 'frontend')
+include('backend', 'frontend', 'end')
