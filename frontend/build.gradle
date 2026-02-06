@@ -1,0 +1,15 @@
+plugins {
+    id 'application'
+}
+
+tasks.register('pnpmRunDev', Exec) {
+    description = 'Runs the Nuxt development server'
+    group = 'pnpm'
+    workingDir file('.')
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'pnpm', 'run', 'dev'
+    } else {
+        commandLine 'pnpm', 'run', 'dev'
+    }
+}

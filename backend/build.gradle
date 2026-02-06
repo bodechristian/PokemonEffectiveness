@@ -103,7 +103,7 @@ tasks.register('createExe', Exec) {
         }
 
         // Clean output directory
-        delete outputDir
+        outputDir.deleteDir()
         outputDir.mkdirs()
 
         println "Creating Windows executable with jpackage..."
