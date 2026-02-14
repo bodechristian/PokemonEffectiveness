@@ -1,3 +1,6 @@
+# open api client code generation
+api-client/
+
 # Nuxt dev/build outputs
 .output
 .data

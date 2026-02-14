@@ -1,3 +1,6 @@
+generated-client/
+
+###
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

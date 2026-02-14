@@ -1,5 +1,8 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
     id 'java-conventions' version '1.0.0'
+    id 'org.openapi.generator' version '7.2.0'
 }
 
 group = 'com.middle'
@@ -8,4 +11,86 @@ description = 'middleend'
 
 javaConventions {
     javaVersion = 21
+}
+
+dependencies {
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+}
+
+// Task to generate TypeScript client for Nuxt frontend
+tasks.register('generateTypeScriptClient', GenerateTask) {
+    group = 'code generation'
+    generatorName = 'typescript-fetch'
+    inputSpec = "${projectDir}/openapi-spec.json"
+    outputDir = "${rootProject.projectDir}/frontend/api-client"
+
+    // Configuration options for TypeScript
+    configOptions = [
+        npmName: 'pokemon-api-client',
+        npmVersion: project.version,
+        supportsES6: 'true',
+        withInterfaces: 'true',
+        useSingleRequestParameter: 'true'
+    ]
+
+    // Additional properties
+    additionalProperties = [
+        apiPackage: 'api',
+        modelPackage: 'models'
+    ]
+}
+
+// Task to generate Java client for backend
+tasks.register('generateJavaClient', GenerateTask) {
+    group = 'code generation'
+    generatorName = 'java'
+    inputSpec = "${projectDir}/openapi-spec.json"
+    outputDir = "${rootProject.projectDir}/backend/generated-client"
+    
+    // API and model package configuration
+    apiPackage = 'com.middle.backend.api.client'
+    modelPackage = 'com.middle.backend.api.model'
+    invokerPackage = 'com.middle.backend.api.invoker'
+    
+    // Configuration options for Java
+    configOptions = [
+        library: 'okhttp-gson',
+        dateLibrary: 'java8',
+        java8: 'true',
+        useJakartaEe: 'true'
+    ]
+}
+
+// Task to export OpenAPI spec from the running application
+tasks.register('exportOpenApiSpec') {
+    description = 'Export OpenAPI specification to JSON file'
+    group = 'documentation'
+
+    def specFile = file("${projectDir}/openapi-spec.json")
+    doLast {
+        def url = new URL('http://localhost:8080/v3/api-docs')
+
+        try {
+            specFile.text = url.text
+            println "OpenAPI spec exported to: ${specFile.absolutePath}"
+        } catch (Exception e) {
+            throw new GradleException(
+                "Failed to fetch OpenAPI spec. Make sure the application is running on http://localhost:8080\n" +
+                "Start it with: ./gradlew :end:bootRun\n" +
+                "Error: ${e.message}"
+            )
+        }
+    }
+}
+
+// Task to generate all clients at once
+tasks.register('generateAllClients') {
+    description = 'Generate TypeScript and Java clients from OpenAPI spec'
+    group = 'code generation'
+    
+    dependsOn exportOpenApiSpec, generateTypeScriptClient, generateJavaClient
+    
+    // Make sure spec is exported before generating clients
+    generateTypeScriptClient.mustRunAfter exportOpenApiSpec
+    generateJavaClient.mustRunAfter exportOpenApiSpec
 }
