@@ -1,16 +1,9 @@
-import org.gradle.internal.jvm.Jvm
-
 plugins {
     id 'java'
-    id 'application'
 }
 
 group = 'org.example'
 version = '1.0-SNAPSHOT'
-
-application {
-    mainClass = 'org.example.Main'
-}
 
 // Ensure the JAR has a manifest with Main-Class attribute
 jar {
@@ -92,7 +85,7 @@ tasks.register('createExe', Exec) {
 
     doFirst {
         // Find jpackage in current JDK
-        def javaHome = Jvm.current().javaHome
+        def javaHome = System.getProperty("java.home")
         def jpackageExe = new File(javaHome, 'bin/jpackage.exe')
 
         if (!jpackageExe.exists()) {

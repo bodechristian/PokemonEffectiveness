@@ -1,7 +1,3 @@
-plugins {
-    id 'application'
-}
-
 tasks.register('pnpmRunDev', Exec) {
     description = 'Runs the Nuxt development server'
     group = 'pnpm'
