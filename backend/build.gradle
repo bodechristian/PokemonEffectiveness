@@ -5,7 +5,6 @@ plugins {
 group = 'org.example'
 version = '1.0-SNAPSHOT'
 
-// Ensure the JAR has a manifest with Main-Class attribute
 jar {
     manifest {
         attributes(
@@ -19,20 +18,15 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit.jupiter
+    testRuntimeOnly libs.junit.platform.launcher
 }
 
 test {
     useJUnitPlatform()
 }
 
-/**
- * Custom task to run the JAR file in a non-blocking way.
- * This builds the JAR and launches it as a separate process.
- * Unlike 'run', this doesn't block Gradle.
- */
 tasks.register('runJar') {
     group = 'application'
     description = 'Builds and runs the application JAR in a separate process (non-blocking)'
@@ -45,7 +39,6 @@ tasks.register('runJar') {
         println "Starting application: ${jarFile.name}"
         println "JAR location: ${jarFile.absolutePath}"
         
-        // Use ProcessBuilder for better control over process spawning
         def processBuilder = new ProcessBuilder(
             'javaw', '-jar', jarFile.absolutePath
         )
@@ -60,17 +53,12 @@ tasks.register('runJar') {
     }
 }
 
-/**
- * Creates a native Windows executable using jpackage.
- * Output will be in build/jpackage/
- */
 tasks.register('createExe', Exec) {
     group = 'distribution'
     description = 'Creates a Windows .exe using jpackage (Windows only)'
 
     dependsOn jar
 
-    // Only run on Windows
     onlyIf {
         org.gradle.internal.os.OperatingSystem.current().isWindows()
     }
@@ -79,12 +67,10 @@ tasks.register('createExe', Exec) {
     def outputDir = layout.buildDirectory.dir('jpackage').get().asFile
     def appName = 'PokemonTypeCalculator'
 
-    // Declare inputs and outputs for up-to-date checking
     inputs.file(jarFile)
     outputs.dir(outputDir)
 
     doFirst {
-        // Find jpackage in current JDK
         def javaHome = System.getProperty("java.home")
         def jpackageExe = new File(javaHome, 'bin/jpackage.exe')
 
@@ -95,7 +81,6 @@ tasks.register('createExe', Exec) {
             )
         }
 
-        // Clean output directory
         outputDir.deleteDir()
         outputDir.mkdirs()
 
@@ -106,7 +91,6 @@ tasks.register('createExe', Exec) {
         println "Output: ${outputDir.absolutePath}"
         println ""
 
-        // Configure command line
         commandLine jpackageExe.absolutePath,
                 '--type', 'app-image',
                 '--input', jarFile.parent,
@@ -124,3 +108,4 @@ tasks.register('createExe', Exec) {
         println "You can now run: ${exePath.absolutePath}"
     }
 }
+
