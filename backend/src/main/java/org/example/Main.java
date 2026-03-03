@@ -13,6 +13,8 @@ public class Main {
      * Main method to launch the application.
      */
     public static void main(String[] args) {
+
+
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

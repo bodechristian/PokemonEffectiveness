@@ -1,0 +1,36 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: REST API for Pokemon type effectiveness calculations
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Pokemon Effectiveness API
+  version: 0.0.1-SNAPSHOT
+servers:
+- description: Generated server url
+  url: http://localhost:8080
+tags:
+- description: Simple greeting endpoint
+  name: Hello
+paths:
+  /hello:
+    get:
+      description: "Returns a simple 'Hello, World!' greeting message"
+      operationId: hello
+      responses:
+        "200":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Successfully retrieved greeting message
+      summary: Get a greeting message
+      tags:
+      - Hello
+      x-accepts: text/plain
+components:
+  schemas: {}
+

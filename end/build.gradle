@@ -14,3 +14,25 @@ javaConventions {
 openapiConventions {
     serverUrl = 'http://localhost:8080'
 }
+
+openApiGenerate {
+    generatorName = "spring"
+    inputSpec = "$rootDir/api/openapi.yaml"
+    outputDir = layout.buildDirectory.dir("generated").get().asFile.absolutePath
+    apiPackage = "com.middle.end.api"
+    modelPackage = "com.middle.end.api.model"
+    configOptions = [
+            interfaceOnly  : "true",
+            useSpringBoot3: "true",
+            skipDefaultInterface: "true"
+    ]
+}
+compileJava.dependsOn tasks.openApiGenerate
+
+sourceSets {
+    main {
+        java {
+            srcDir layout.buildDirectory.dir("generated/src/main/java")
+        }
+    }
+}

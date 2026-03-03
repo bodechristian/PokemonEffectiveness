@@ -1,11 +1,18 @@
-tasks.register('pnpmRunDev', Exec) {
+plugins {
+    id 'com.github.node-gradle.node' version '7.0.2'
+    id 'org.openapi.generator' version '7.2.0'
+}
+
+openApiGenerate {
+    generatorName = 'typescript-fetch'
+    inputSpec = "$rootDir/api/openapi.yaml"
+    outputDir = "$projectDir/app/generated"
+}
+
+tasks.register('pnpmRunDev', PnpmTask) {
     description = 'Runs the Nuxt development server'
     group = 'pnpm'
-    workingDir file('.')
-
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'cmd', '/c', 'pnpm', 'run', 'dev'
-    } else {
-        commandLine 'pnpm', 'run', 'dev'
-    }
+    pnpmCommand = ['run', 'dev']
 }
+pnpmRunDev.dependsOn('openApiGenerate')
+pnpmRunDev.dependsOn(pnpmInstall)
