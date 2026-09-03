@@ -1,6 +1,6 @@
 # Adding an MCP server to an existing Spring Boot service
 
-Developer guideline. Verified against Spring Boot 4.1.1 + Spring AI 2.0.1.
+Developer guideline. Verified against Spring Boot 4.1.1 + Spring AI 2.0.1. [Docs](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-stateless-server-boot-starter-docs.html)
 
 ## Minimal adaptation: three changes
 
@@ -14,7 +14,7 @@ implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
 **2. One property** — the transport is served at `/mcp`
 
 ```properties
-spring.ai.mcp.server.protocol=STREAMABLE
+spring.ai.mcp.server.protocol=STATELESS
 spring.ai.mcp.server.name=my-service
 ```
 
@@ -88,35 +88,45 @@ applies:
   (`Map<Double, List<T>>` is valid but poor for a model to read)
 - a policy of keeping Spring AI imports out of domain classes
 
-Fewer files versus a stable contract. Nothing else.
+Fewer files versus a stable contract.
 
-## Before shipping a tool
+## Kubernetes: `/mcp` needs its own Ingress
 
-- [ ] `tools/list` shows the schema you expect (check `required` and any enums)
-- [ ] `tools/call` succeeds with the exact values the schema advertises
-- [ ] Description says *when* to use the tool, not just what it does
-- [ ] No internal helper got published by accident
+ingress-nginx annotations apply to the whole Ingress object, and `/mcp` needs settings the
+other paths must not have. Give it a separate resource — Ingresses are additive and can
+share a host.
 
-```bash
-curl -s -X POST http://localhost:8080/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1"}}}'
-```
+- **No `rewrite-target`** — the service/application.properties already serves `/mcp`; a shared rewrite breaks it.
+- **`proxy-buffering: "off"`** — responses are server-sent events.
+- **`proxy-read-timeout` / `proxy-send-timeout`** — the 60s default kills idle streams.
+- **Scaling** — the default transport keeps session state in memory. Set
+  `spring.ai.mcp.server.protocol=STATELESS`, or pin sessions with
+  `upstream-hash-by: "$http_mcp_session_id"`.
+- **Auth** — `/mcp` is unauthenticated. Keep the Ingress internal or put auth in front.
 
-Reuse the returned `Mcp-Session-Id` header for `tools/list` and `tools/call`.
+## MCP transport: `STREAMABLE` vs `STATELESS`
 
-## Behind an ingress
+`spring.ai.mcp.server.protocol` decides whether the server keeps per-client state. Both serve
+the same `@McpTool` methods — they differ in what the server can do *between* calls.
 
-Streamable HTTP replies with server-sent events. Proxies need buffering off, or
-responses arrive chunked, late, or never:
+| | `STREAMABLE` | `STATELESS` |
+|---|---|---|
+| Session | `Mcp-Session-Id`, held in memory | none |
+| `initialize` handshake | required before calls | not required |
+| Server→client pushes (sampling, elicitation, progress, `listChanged`) | yes | no |
+| `logging` capability | advertised | not advertised |
+| Response framing | server-sent events | plain JSON |
+| Scaling | needs session affinity, or one replica | any number of replicas |
+| Proxy/Ingress | buffering off, long timeouts | no special handling |
 
-```nginx
-location /mcp {
-    proxy_pass http://backend;
-    proxy_http_version 1.1;
-    proxy_buffering off;
-    proxy_read_timeout 1h;
-    proxy_set_header Connection "";
-}
-```
+Neither affects the client's conversation history — that lives in the agent, not the server.
+
+**`STREAMABLE` earns its cost when** a tool runs long enough to report progress, the server
+needs to ask the client's model for a completion (sampling) or the user for input
+(elicitation), or the tool list changes at runtime and clients must be notified.
+
+**`STATELESS` is the simpler default when** tools are plain request/response. It drops the
+handshake, session affinity and the SSE-specific proxy settings.
+
+Independent of the choice: a tool holding per-user state in memory across calls breaks once
+replicas > 1. That state belongs in a store, not the transport.
