@@ -1,0 +1,14 @@
+/*
+ * buildSrc hosts the convention plugins that used to live in the standalone
+ * ConventionsPlugin project and were consumed from mavenLocal(). Vendoring them
+ * here makes the build self-contained, which is what lets a Docker build stage
+ * compile this project without access to the developer's ~/.m2.
+ */
+rootProject.name = 'buildSrc'
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}

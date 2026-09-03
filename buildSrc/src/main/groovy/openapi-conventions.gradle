@@ -1,0 +1,61 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
+plugins {
+    id 'org.openapi.generator'
+}
+
+dependencies {
+    // 3.x is the Spring Boot 4 line, 2.x targets Boot 3 and fails to autoconfigure here
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+}
+
+// Create extension for OpenAPI configuration
+project.extensions.add('openapiConventions', [serverUrl: 'http://localhost:8080'])
+
+tasks.register('generateTypeScriptClient', GenerateTask) {
+    group = 'code generation'
+    generatorName = 'typescript-fetch'
+    inputSpec = "${projectDir}/openapi-spec.json"
+    outputDir = "${rootProject.projectDir}/frontend/api-client"
+    configOptions = [
+        supportsES6: 'true',
+        withInterfaces: 'true'
+    ]
+}
+
+tasks.register('generateJavaClient', GenerateTask) {
+    group = 'code generation'
+    generatorName = 'java'
+    inputSpec = "${projectDir}/openapi-spec.json"
+    outputDir = "${rootProject.projectDir}/backend/generated-client"
+    apiPackage = 'com.middle.api.client'
+    modelPackage = 'com.middle.api.model'
+    configOptions = [
+        library: 'okhttp-gson',
+        dateLibrary: 'java8'
+    ]
+}
+
+tasks.register('exportOpenApiSpec') {
+    group = 'documentation'
+    description = 'Exports OpenAPI spec from running server (run bootRun separately first)'
+    def serverUrl = project.extensions.openapiConventions.serverUrl
+    def specFile = file("${projectDir}/openapi-spec.json")
+
+    doLast {
+        try {
+            def url = new URI("${serverUrl}/v3/api-docs").toURL()
+            specFile.text = url.openConnection().getInputStream().getText('UTF-8')
+            logger.lifecycle("Exported OpenAPI spec from ${serverUrl}/v3/api-docs")
+        } catch (Exception e) {
+            throw new GradleException("Failed to fetch spec from ${serverUrl}/v3/api-docs. Is the server running? (gradle bootRun)\nError: ${e.message}")
+        }
+    }
+}
+
+tasks.register('generateAllClients') {
+    group = 'code generation'
+    dependsOn exportOpenApiSpec, generateTypeScriptClient, generateJavaClient
+    generateTypeScriptClient.mustRunAfter exportOpenApiSpec
+    generateJavaClient.mustRunAfter exportOpenApiSpec
+}

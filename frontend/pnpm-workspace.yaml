@@ -1,0 +1,5 @@
+# pnpm 11 blocks dependency build scripts unless they are explicitly allowed here.
+# Both of these need their postinstall to produce working native binaries.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true

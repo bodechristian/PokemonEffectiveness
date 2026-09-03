@@ -1,8 +1,16 @@
 pluginManagement {
     repositories {
-        mavenLocal()
         gradlePluginPortal()
     }
 }
 rootProject.name = 'PokemonEffectiveness'
-include('backend', 'frontend', 'end')
+
+// Docker build stages copy only the modules they actually need, and Gradle
+// refuses to configure a project whose directory is missing. Including the
+// modules that are present keeps those slim build contexts working without
+// every Dockerfile having to know the full module list.
+['backend', 'frontend', 'end'].each { module ->
+    if (file(module).isDirectory()) {
+        include(module)
+    }
+}

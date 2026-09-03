@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.java.conventions)
-    alias(libs.plugins.openapi.conventions)
+    id 'java-conventions'
+    id 'openapi-conventions'
 }
 
 group = 'com.middle'
@@ -15,6 +15,15 @@ openapiConventions {
     serverUrl = 'http://localhost:8080'
 }
 
+dependencies {
+    // Kubernetes liveness/readiness probes
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // MCP server over Streamable HTTP. 2.0.x is the Spring Boot 4 line.
+    implementation platform('org.springframework.ai:spring-ai-bom:2.0.1')
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+}
+
 openApiGenerate {
     generatorName = "spring"
     inputSpec = "$rootDir/api/openapi.yaml"
@@ -23,6 +32,7 @@ openApiGenerate {
     modelPackage = "com.middle.end.api.model"
     configOptions = [
             interfaceOnly  : "true",
+            openApiNullable: "false",
             useSpringBoot3: "true",
             skipDefaultInterface: "true"
     ]

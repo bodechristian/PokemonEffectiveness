@@ -1,0 +1,9 @@
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootPluginVersion}"
+    implementation "io.spring.gradle:dependency-management-plugin:${dependencyManagementPluginVersion}"
+    implementation "org.openapitools:openapi-generator-gradle-plugin:${openapiGeneratorVersion}"
+}

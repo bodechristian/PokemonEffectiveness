@@ -15,6 +15,8 @@ servers:
 tags:
 - description: Simple greeting endpoint
   name: Hello
+- description: Pokemon type effectiveness calculations
+  name: Effectiveness
 paths:
   /hello:
     get:
@@ -30,7 +32,148 @@ paths:
       summary: Get a greeting message
       tags:
       - Hello
-      x-accepts: text/plain
+  /effectiveness:
+    get:
+      description: >-
+        Returns the damage multiplier an attacking move type deals to a Pokemon
+        with one or two defending types. For dual-type Pokemon the two
+        multipliers are multiplied together.
+      operationId: calculateEffectiveness
+      parameters:
+      - name: attackingType
+        in: query
+        required: true
+        description: Type of the attacking move
+        schema:
+          $ref: '#/components/schemas/PokemonType'
+      - name: defendingType1
+        in: query
+        required: true
+        description: Primary type of the defending Pokemon
+        schema:
+          $ref: '#/components/schemas/PokemonType'
+      - name: defendingType2
+        in: query
+        required: false
+        description: Secondary type of the defending Pokemon, omit for single-type Pokemon
+        schema:
+          $ref: '#/components/schemas/PokemonType'
+      responses:
+        "200":
+          description: The combined damage multiplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectivenessResult'
+      summary: Calculate combined type effectiveness
+      tags:
+      - Effectiveness
+  /effectiveness/matchups:
+    get:
+      description: >-
+        Returns every attacking type grouped by the damage multiplier it deals
+        to a Pokemon with the given defending types. Groups are ordered from the
+        highest multiplier to the lowest.
+      operationId: getMatchups
+      parameters:
+      - name: defendingType1
+        in: query
+        required: true
+        description: Primary type of the defending Pokemon
+        schema:
+          $ref: '#/components/schemas/PokemonType'
+      - name: defendingType2
+        in: query
+        required: false
+        description: Secondary type of the defending Pokemon, omit for single-type Pokemon
+        schema:
+          $ref: '#/components/schemas/PokemonType'
+      responses:
+        "200":
+          description: Attacking types grouped by multiplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Matchups'
+      summary: Group all attacking types by effectiveness
+      tags:
+      - Effectiveness
 components:
-  schemas: {}
-
+  schemas:
+    PokemonType:
+      type: string
+      description: A Pokemon type
+      enum:
+      - normal
+      - fire
+      - water
+      - electric
+      - grass
+      - ice
+      - fighting
+      - poison
+      - ground
+      - flying
+      - psychic
+      - bug
+      - rock
+      - ghost
+      - dragon
+      - dark
+      - steel
+      - fairy
+    EffectivenessResult:
+      type: object
+      required:
+      - attackingType
+      - defendingType1
+      - multiplier
+      - label
+      properties:
+        attackingType:
+          $ref: '#/components/schemas/PokemonType'
+        defendingType1:
+          $ref: '#/components/schemas/PokemonType'
+        defendingType2:
+          $ref: '#/components/schemas/PokemonType'
+        multiplier:
+          type: number
+          format: double
+          description: Damage multiplier, e.g. 0.0, 0.25, 0.5, 1.0, 2.0 or 4.0
+          example: 4.0
+        label:
+          type: string
+          description: Human readable description of the multiplier
+          example: 4x - Extremely Effective
+    MatchupGroup:
+      type: object
+      required:
+      - multiplier
+      - label
+      - attackingTypes
+      properties:
+        multiplier:
+          type: number
+          format: double
+          example: 2.0
+        label:
+          type: string
+          example: 2x - Super Effective
+        attackingTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonType'
+    Matchups:
+      type: object
+      required:
+      - defendingType1
+      - groups
+      properties:
+        defendingType1:
+          $ref: '#/components/schemas/PokemonType'
+        defendingType2:
+          $ref: '#/components/schemas/PokemonType'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchupGroup'

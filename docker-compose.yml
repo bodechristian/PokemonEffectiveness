@@ -1,0 +1,46 @@
+# Three images, three containers: the Nuxt frontend, the Spring Boot end service
+# and an nginx gateway that plays the role a Kubernetes Ingress would.
+#
+#   docker compose up --build
+#   open http://localhost:8081
+#
+# Only the gateway publishes a port, the same way only an Ingress is reachable
+# from outside a cluster. Add a ports mapping to a service to debug it directly.
+
+services:
+  end:
+    build:
+      context: .
+      dockerfile: end/Dockerfile
+    image: pokemon-end:local
+    environment:
+      # Unused while traffic goes through the gateway (single origin), kept so
+      # the service still works if you publish its port and call it directly.
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:8081,http://localhost:3000
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: pokemon-frontend:local
+    environment:
+      # Same-origin path through the gateway, so no CORS and no hardcoded host.
+      NUXT_PUBLIC_API_BASE_URL: /api
+    depends_on:
+      end:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./gateway
+    image: pokemon-gateway:local
+    ports:
+      - "8081:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      end:
+        condition: service_healthy
+    restart: unless-stopped

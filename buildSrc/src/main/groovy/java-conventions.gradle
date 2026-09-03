@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+project.extensions.add('javaConventions', [javaVersion: 21])
+
+afterEvaluate {
+    def javaVer = project.extensions.javaConventions.javaVersion
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(javaVer as int)
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    // version left to the Spring Boot BOM, pinning it downgrades the launcher
+    // below the JUnit version Boot ships and breaks test discovery
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

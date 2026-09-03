@@ -1,8 +1,8 @@
-import { Configuration, HelloApi } from '~/generated'
+import { Configuration, EffectivenessApi, HelloApi } from '~/generated'
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  
+
   const configuration = new Configuration({
     basePath: config.public.apiBaseUrl
   })
@@ -10,7 +10,8 @@ export default defineNuxtPlugin(() => {
   return {
     provide: {
       api: {
-        HelloAPI: new HelloApi(configuration)
+        HelloAPI: new HelloApi(configuration),
+        EffectivenessAPI: new EffectivenessApi(configuration)
       }
     }
   }

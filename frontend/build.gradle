@@ -1,6 +1,7 @@
 plugins {
     id 'com.github.node-gradle.node' version '7.0.2'
-    id 'org.openapi.generator' version '7.2.0'
+    // version comes from buildSrc, which already puts the generator on the classpath
+    id 'org.openapi.generator'
     id 'org.barfuin.gradle.taskinfo' version '3.0.2'
 }
 
