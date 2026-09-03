@@ -1,6 +1,6 @@
 pluginManagement {
     repositories {
-        mavenLocal() // or your artifact repository
+        mavenLocal()
         gradlePluginPortal()
     }
 }

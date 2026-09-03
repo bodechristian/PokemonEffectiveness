@@ -7,7 +7,10 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint-report": "echo lint-report && node -e \"setTimeout(()=>{},10000)\" && echo lint-report ending",
+    "tsc-check": "echo tsc-check && node -e \"setTimeout(()=>{},6000)\" && echo tsc-check ending",
+    "linting": "echo linting && node -e \"setTimeout(()=>{},8000)\" && echo linting ending"
   },
   "dependencies": {
     "nuxt": "^4.3.0",

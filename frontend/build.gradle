@@ -1,6 +1,7 @@
 plugins {
     id 'com.github.node-gradle.node' version '7.0.2'
     id 'org.openapi.generator' version '7.2.0'
+    id 'org.barfuin.gradle.taskinfo' version '3.0.2'
 }
 
 openApiGenerate {
@@ -14,5 +15,59 @@ tasks.register('pnpmRunDev', PnpmTask) {
     group = 'pnpm'
     pnpmCommand = ['run', 'dev']
 }
-pnpmRunDev.dependsOn('openApiGenerate')
-pnpmRunDev.dependsOn(pnpmInstall)
+tasks.pnpmRunDev.dependsOn(tasks.openApiGenerate)
+tasks.pnpmRunDev.dependsOn(tasks.pnpmInstall)
+
+interface FrontendExtension {
+    Property<Boolean> getInPipeline()
+}
+
+def extensions = project.extensions
+def frontend = extensions.create('frontend', FrontendExtension)
+frontend.inPipeline.convention(true)
+
+tasks.register('build') {
+
+}
+
+tasks.register('pnpmSetupStore') {
+    description = 'Delegates to pnpmInstallFrozen or pnpmInstall based on inPipeline'
+    group = 'pnpm'
+    pnpmCommand = ['config', 'set', 'store-dir', '.pnpm-store']
+}
+
+tasks.register('pnpmInstallDecide') {
+    description = 'Delegates to pnpmInstallFrozen or pnpmInstall based on inPipeline'
+    group = 'pnpm'
+    dependsOn(frontend.inPipeline.get() ? tasks.named('pnpmInstallFrozen') : tasks.named('pnpmInstall'))
+}
+
+tasks.register('pnpmInstallFrozen', PnpmTask) {
+    description = 'Installs dependencies with a frozen lockfile (CI)'
+    group = 'pnpm'
+    pnpmCommand = ['install', '--frozen-lockfile']
+}
+
+tasks.register('pnpmLintReport', PnpmTask) {
+    description = 'Runs pnpm lint-report'
+    group = 'pnpm'
+    pnpmCommand = ['run', 'lint-report']
+}
+tasks.pnpmLintReport.dependsOn(tasks.pnpmInstallDecide)
+tasks.build.dependsOn(tasks.pnpmLintReport)
+
+tasks.register('pnpmTscCheck', PnpmTask) {
+    description = 'Runs pnpm tsc-check'
+    group = 'pnpm'
+    pnpmCommand = ['run', 'tsc-check']
+}
+tasks.pnpmTscCheck.dependsOn(tasks.pnpmInstallDecide)
+tasks.build.dependsOn(tasks.pnpmTscCheck)
+
+tasks.register('pnpmLinting', PnpmTask) {
+    description = 'Runs pnpm linting'
+    group = 'pnpm'
+    pnpmCommand = ['run', 'linting']
+}
+tasks.pnpmLinting.dependsOn(tasks.pnpmInstallDecide)
+tasks.build.dependsOn(tasks.pnpmLinting)
